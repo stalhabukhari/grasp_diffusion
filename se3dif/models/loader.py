@@ -13,7 +13,7 @@ pretrained_models_dir = get_pretrained_models_src()
 def load_model(args):
     if 'pretrained_model' in args:
         model_args = load_experiment_specifications(os.path.join(pretrained_models_dir,
-                                                                      args['pretrained_model']))
+                                                                 args['pretrained_model']))
         args["NetworkArch"] = model_args["NetworkArch"]
         args["NetworkSpecs"] = model_args["NetworkSpecs"]
 

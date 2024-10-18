@@ -12,8 +12,8 @@ def load_experiment_specifications(experiment_directory):
 
     if not os.path.isfile(filename):
         raise Exception(
-            "The experiment directory ({}) does not include specifications file "
-            + '"params.json"'.format(experiment_directory)
+            "The experiment directory ({}) does not include specifications file ".format(experiment_directory)
+            + '"params.json"'
         )
 
     return json.load(open(filename))

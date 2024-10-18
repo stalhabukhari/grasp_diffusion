@@ -326,10 +326,8 @@ class PointcloudAcronymAndSDFDataset(Dataset):
         self.type = 'test'
 
     def _get_grasps(self, grasp_obj):
-        try:
-            rix = np.random.randint(low=0, high=grasp_obj.good_grasps.shape[0], size=self.n_density)
-        except:
-            print('lets see')
+        rix = np.random.randint(low=0, high=grasp_obj.good_grasps.shape[0],
+                                size=self.n_density)
         H_grasps = grasp_obj.good_grasps[rix, ...]
         return H_grasps
 

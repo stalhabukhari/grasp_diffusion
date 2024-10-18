@@ -27,6 +27,12 @@ pip install -e .
 #### Installation Issues
 1. ```pip install theseus-ai``` not working.
 I suggest trying to install Theseus from source https://github.com/AI-App/Theseus
+2. ```pip install pytorch3d``` not working.
+Try: ```conda install pytorch3d -c pytorch3d```.
+or ```pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"```
+
+3. Custom pytorch:
+Try: ```conda install pytorch==2.0.1 torchvision==0.15.2 pytorch-cuda=11.7 -c pytorch -c nvidia```
 
 
 ## Download Data and Trained Models

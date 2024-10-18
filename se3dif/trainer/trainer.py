@@ -31,7 +31,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
         checkpoints_dir = os.path.join(model_dir, 'checkpoints')
         makedirs(checkpoints_dir)
 
-        exp_name = datetime.datetime.now().strftime("%m.%d.%Y %H:%M:%S")
+        exp_name = datetime.datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
         writer = SummaryWriter(summaries_dir+ '/' + exp_name)
 
     total_steps = 0
