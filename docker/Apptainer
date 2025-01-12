@@ -1,0 +1,57 @@
+Bootstrap: docker
+From: nvidia/cuda:11.7.1-devel-ubuntu22.04
+
+%environment
+    export DEBIAN_FRONTEND=noninteractive
+    export PATH="/root/miniconda3/bin:${PATH}"
+
+%setup
+    mkdir -p $APPTAINER_ROOTFS/env-setup
+    mkdir -p $APPTAINER_ROOTFS/code-dir
+    mkdir -p $APPTAINER_ROOTFS/data-dir
+    mkdir -p $APPTAINER_ROOTFS/runs-dir
+
+%post
+    # Update and install necessary packages
+    apt update && \
+    apt install -y \
+        wget git net-tools vim curl build-essential x11vnc zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev \
+        libreadline-dev libffi-dev libsqlite3-dev libbz2-dev liblzma-dev freeglut3-dev && \
+        # Install additional libraries for OpenCV (uncomment if not needed)
+        apt install -y --no-install-recommends libglib2.0-0 libxrender1 libxext6 libsm6 libgl1-mesa-glx && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+    # Install Miniconda
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    mkdir /root/.conda && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b && \
+    rm -f Miniconda3-latest-Linux-x86_64.sh && \
+    echo "Miniconda installed: $(/root/miniconda3/bin/conda --version)"
+
+    # Initialize Conda and set up environment
+    conda init bash && \
+    source /root/.bashrc && \
+    conda create -n gdiff python=3.8 -y && \
+    source activate gdiff && pip install --upgrade pip && \
+    conda install -y pytorch==2.0.1 torchvision==0.15.2 pytorch-cuda=11.7 -c pytorch -c nvidia && \
+    pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+
+    # Install additional Python packages from requirements.txt
+    source activate gdiff && \
+    conda install -c conda-forge suitesparse==5.10.1 scikit-sparse==0.4.8 && \
+    pip install -e /code-dir
+
+    # Clone and install the mesh_to_sdf package
+    source activate gdiff && cd $APPTAINER_ROOTFS/env-setup && \
+    git clone https://github.com/robotgradient/mesh_to_sdf.git && \
+    pip install -e mesh_to_sdf
+
+%runscript
+    # This is the entrypoint equivalent; it runs bash in the Conda environment
+    exec conda run --no-capture-output -n gdiff /bin/bash "$@"
+
+%labels
+    Author Talha
+    Version 1.0
+    Description "Apptainer for GraspDiffusion with PyTorch (GPU)"
