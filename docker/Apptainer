@@ -1,17 +1,17 @@
 Bootstrap: docker
 From: nvidia/cuda:11.7.1-devel-ubuntu22.04
 
-%environment
-    export DEBIAN_FRONTEND=noninteractive
-    export PATH="/root/miniconda3/bin:${PATH}"
-
 %setup
+    mkdir -p $APPTAINER_ROOTFS/root/.conda
     mkdir -p $APPTAINER_ROOTFS/env-setup
     mkdir -p $APPTAINER_ROOTFS/code-dir
     mkdir -p $APPTAINER_ROOTFS/data-dir
     mkdir -p $APPTAINER_ROOTFS/runs-dir
 
-%post
+%post -c /bin/bash
+    # Set noninteractive mode
+    export DEBIAN_FRONTEND=noninteractive
+
     # Update and install necessary packages
     apt update && \
     apt install -y \
@@ -24,32 +24,43 @@ From: nvidia/cuda:11.7.1-devel-ubuntu22.04
 
     # Install Miniconda
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    mkdir /root/.conda && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p /root/miniconda3 && \
     rm -f Miniconda3-latest-Linux-x86_64.sh && \
     echo "Miniconda installed: $(/root/miniconda3/bin/conda --version)"
 
+    # Add conda to PATH
+    echo 'export PATH="/root/miniconda3/bin:${PATH}"' >> ~/.bashrc
+    eval "$(/root/miniconda3/bin/conda shell.bash hook)"
+    source /root/miniconda3/etc/profile.d/conda.sh
+    conda init bash
+
     # Initialize Conda and set up environment
-    conda init bash && \
-    source /root/.bashrc && \
-    conda create -n gdiff python=3.8 -y && \
-    source activate gdiff && pip install --upgrade pip && \
-    conda install -y pytorch==2.0.1 torchvision==0.15.2 pytorch-cuda=11.7 -c pytorch -c nvidia && \
+    conda create -n gdiff python=3.8 -y
+    conda activate gdiff
+    pip install --upgrade pip
+    conda install -y pytorch==2.0.1 torchvision==0.15.2 pytorch-cuda=11.7 -c pytorch -c nvidia
     pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
 
     # Install additional Python packages from requirements.txt
-    source activate gdiff && \
-    conda install -c conda-forge suitesparse==5.10.1 scikit-sparse==0.4.8 && \
+    conda install -c conda-forge suitesparse==5.10.1 scikit-sparse==0.4.8
     pip install -e /code-dir
 
     # Clone and install the mesh_to_sdf package
-    source activate gdiff && cd $APPTAINER_ROOTFS/env-setup && \
+    cd /env-setup && \
     git clone https://github.com/robotgradient/mesh_to_sdf.git && \
     pip install -e mesh_to_sdf
 
+%environment
+    # Add conda to PATH and activate environment
+    export PATH="/root/miniconda3/bin:${PATH}"
+
 %runscript
-    # This is the entrypoint equivalent; it runs bash in the Conda environment
-    exec conda run --no-capture-output -n gdiff /bin/bash "$@"
+    # Default entry point
+    exec /root/miniconda3/bin/conda run --no-capture-output -n gdiff /bin/bash -c "$@"
+
+%startscript
+    # Start script for the container
+    exec /root/miniconda3/bin/conda run --no-capture-output -n gdiff /bin/bash -c "$@"
 
 %labels
     Author Talha

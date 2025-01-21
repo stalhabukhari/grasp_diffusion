@@ -11,3 +11,4 @@ matplotlib==3.5.3
 tensorboard==2.10.0
 natsort==8.2.0
 #pytorch3d
+pyyaml==6.0
